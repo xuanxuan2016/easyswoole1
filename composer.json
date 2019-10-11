@@ -1,0 +1,8 @@
+{
+    "require": {
+        "easyswoole/easyswoole": "3.x",
+        "easyswoole/utility": "^1.1",
+	"easyswoole/mysqli":"^1.2",
+        "easyswoole/redis-pool": "^1.0"
+    }
+}
