@@ -12,6 +12,9 @@ namespace EasySwoole\Component\Pool;
 use EasySwoole\Component\Pool\Exception\PoolObjectNumError;
 use EasySwoole\Spl\SplBean;
 
+/**
+ * 连接池配置文件
+ */
 class PoolConf extends SplBean
 {
     protected $intervalCheckTime = 30*1000;

@@ -8,7 +8,9 @@
 
 namespace EasySwoole\Component\Pool;
 
-
+/**
+ * 连接池对象抽象类
+ */
 abstract class AbstractPoolObject implements PoolObjectInterface
 {
     function gc()
