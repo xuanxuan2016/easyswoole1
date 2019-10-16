@@ -16,6 +16,9 @@ use Swoole\Coroutine;
 
 trait TraitInvoker
 {
+    /**
+     * 传入回调来使用连接池对象，使用完会自动回收对象
+     */
     public static function invoke(callable $call,float $timeout = null)
     {
         $pool = PoolManager::getInstance()->getPool(static::class);
@@ -23,11 +26,13 @@ trait TraitInvoker
             $obj = $pool->getObj($timeout);
             if($obj){
                 try{
+                    //调用传入的方法
                     $ret = call_user_func($call,$obj);
                     return $ret;
                 }catch (\Throwable $throwable){
                     throw $throwable;
                 }finally{
+                    //回收对象
                     $pool->recycleObj($obj);
                 }
             }else{
@@ -37,7 +42,10 @@ trait TraitInvoker
             throw new PoolException(static::class." convert to pool error");
         }
     }
-
+    
+    /**
+     * 获取一个连接,协程结束后自动回收
+     */
     public static function defer($timeout = null)
     {
         $key = md5(static::class);

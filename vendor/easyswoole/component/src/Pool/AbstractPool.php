@@ -20,18 +20,44 @@ use Swoole\Timer;
  */
 abstract class AbstractPool
 {
+    /**
+     * 复用连接池调用的类
+     */
     use TraitInvoker;
-
+    
+    /**
+     * 已创建的对象数
+     */
     private $createdNum = 0;
+    
+    /**
+     * 连接池通道，用于存放具体的对象，如objRedis
+     */
     private $poolChannel;
+    
+    /**
+     *连接池中对象的hash值，用于维护连接池中对象的使用 
+     */
     private $objHash = [];
+    
+    /**
+     * 连接池配置信息
+     */
     private $conf;
+    
+    /**
+     * 连接池的定时器
+     */
     private $timerId;
+    
+    /**
+     * 连接池是否已销毁，如果销毁了需要回收所有对象
+     */
     private $destroy = false;
 
     /*
      * 如果成功创建了,请返回对应的obj
-     * 用于创建具体的连接对象
+     * 用于创建具体的连接对象，需要被实现
      */
     abstract protected function createObject();
     
@@ -48,6 +74,7 @@ abstract class AbstractPool
         }
         $this->conf = $conf;
         //定义连接池管道
+        //+8，给通道增加一个余量防止极限情况
         $this->poolChannel = new Channel($conf->getMaxObjectNum() + 8);
         if ($conf->getIntervalCheckTime() > 0) {
             //设置定时器，移除空闲时间大于[maxIdleTime]的连接对象，并维持[minObjectNum]最小连接对象
@@ -60,12 +87,15 @@ abstract class AbstractPool
      */
     public function recycleObj($obj): bool
     {
+        /**
+         * 连接池被销毁，需要销毁连接池对象
+         */
         if($this->destroy){
             $this->unsetObj($obj);
             return true;
         }
         /*
-         * 仅仅允许归属于本pool且不在pool内的对象进行回收
+         * 只允许回收属于本pool且不在pool内的对象
          */
         if($this->isPoolObject($obj) && (!$this->isInPool($obj))){
             $hash = $obj->__objHash;
@@ -81,6 +111,7 @@ abstract class AbstractPool
                     throw $throwable;
                 }
             }
+            //连接池对象重新进入通道
             $this->poolChannel->push($obj);
             return true;
         }else{
@@ -90,17 +121,20 @@ abstract class AbstractPool
 
     /*
      * 获取连接池对象
-     * 1.tryTimes为出现异常尝试次数
+     * 1.tryTimes为获取对象的重试次数
      */
     public function getObj(float $timeout = null, int $tryTimes = 3)
     {
+        //连接池是否已被销毁
         if($this->destroy){
             return null;
         }
+        //从连接池中获取对象的超时时间
         if($timeout === null){
             $timeout = $this->getConfig()->getGetObjectTimeout();
         }
         $object = null;
+        //如果通道为空，则创建对象
         if($this->poolChannel->isEmpty()){
             try{
                 $this->initObject();
@@ -113,11 +147,13 @@ abstract class AbstractPool
                 }
             }
         }
+        //从通道获取对象
         $object = $this->poolChannel->pop($timeout);
         if(is_object($object)){
             if($object instanceof PoolObjectInterface){
                 try{
                     if($object->beforeUse() === false){
+                        //对象已被弃用，销毁对象重新尝试获取
                         $this->unsetObj($object);
                         if($tryTimes <= 0){
                             return null;
@@ -127,6 +163,7 @@ abstract class AbstractPool
                         }
                     }
                 }catch (\Throwable $throwable){
+                    //出现异常，销毁对象重新尝试获取
                     $this->unsetObj($object);
                     if($tryTimes <= 0){
                         throw $throwable;
@@ -265,7 +302,7 @@ abstract class AbstractPool
     {
         $obj = null;
         
-        //判断是否已达到最大可创建数量
+        //判断是否已达到最大可创建数量(此种写法是先占用位置，而不是等到创建结束再++)
         $this->createdNum++;
         if($this->createdNum > $this->getConfig()->getMaxObjectNum()){
             $this->createdNum--;
@@ -294,7 +331,7 @@ abstract class AbstractPool
     }
     
     /**
-     * 对象是否为连接池对象
+     * 对象是否属于当前连接池
      * 1.判断依据对象是否有[__objHash]属性，且在[$objHash]数组中
      */
     public function isPoolObject($obj):bool
@@ -324,10 +361,12 @@ abstract class AbstractPool
     function destroyPool()
     {
         $this->destroy = true;
+        //销毁连接池的定时器
         if($this->timerId && Timer::exists($this->timerId)){
             Timer::clear($this->timerId);
             $this->timerId = null;
         }
+        //释放连接池中的对象
         while (!$this->poolChannel->isEmpty()){
             $item = $this->poolChannel->pop(0.01);
             $this->unsetObj($item);
