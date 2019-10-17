@@ -45,6 +45,7 @@ class ComposerStaticInitf7d6af7a0e90db90baa911ac61bf309b
             'EasySwoole\\Config\\' => 18,
             'EasySwoole\\Component\\Tests\\' => 27,
             'EasySwoole\\Component\\' => 21,
+            'EasySwoole\\AtomicLimit\\' => 23,
         ),
         'C' => 
         array (
@@ -140,6 +141,10 @@ class ComposerStaticInitf7d6af7a0e90db90baa911ac61bf309b
         'EasySwoole\\Component\\' => 
         array (
             0 => __DIR__ . '/..' . '/easyswoole/component/src',
+        ),
+        'EasySwoole\\AtomicLimit\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/easyswoole/atomic-limit/src',
         ),
         'Cron\\' => 
         array (
