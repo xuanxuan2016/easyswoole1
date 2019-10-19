@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: yf
- * Date: 2018/7/20
- * Time: 上午11:28
- */
+
 
 namespace EasySwoole\Mysqli;
 
@@ -21,25 +16,8 @@ class Config extends SplBean
     protected $timeout = 30;
     protected $charset = 'utf8';
     protected $strict_type =  false; //开启严格模式，返回的字段将自动转为数字类型
-    protected $fetch_mode = false;//开启fetch模式, 可与pdo一样使用fetch/fetchAll逐行或获取全部结果集(4.0版本以上)
-    protected $alias = '';
-    protected $isSubQuery = false;
-    protected $max_reconnect_times = 3;
-    protected $errorToException = false;
-    /**
-     * @var ?callable
-     */
-    protected $onQuery;
-
-    public function isErrorToException(): bool
-    {
-        return $this->errorToException;
-    }
-
-    public function setErrorToException(bool $errorToException): void
-    {
-        $this->errorToException = $errorToException;
-    }
+    protected $fetch_mode = false;//开启fetch模式, 可与pdo一样使用fetch/fetchAll逐行
+    protected $maxReconnectTimes = 3;
 
     /**
      * @return mixed
@@ -52,7 +30,7 @@ class Config extends SplBean
     /**
      * @param mixed $host
      */
-    public function setHost($host)
+    public function setHost($host): void
     {
         $this->host = $host;
     }
@@ -68,7 +46,7 @@ class Config extends SplBean
     /**
      * @param mixed $user
      */
-    public function setUser($user)
+    public function setUser($user): void
     {
         $this->user = $user;
     }
@@ -84,7 +62,7 @@ class Config extends SplBean
     /**
      * @param mixed $password
      */
-    public function setPassword($password)
+    public function setPassword($password): void
     {
         $this->password = $password;
     }
@@ -100,7 +78,7 @@ class Config extends SplBean
     /**
      * @param mixed $database
      */
-    public function setDatabase($database)
+    public function setDatabase($database): void
     {
         $this->database = $database;
     }
@@ -108,7 +86,7 @@ class Config extends SplBean
     /**
      * @return int
      */
-    public function getPort()
+    public function getPort(): int
     {
         return $this->port;
     }
@@ -116,39 +94,39 @@ class Config extends SplBean
     /**
      * @param int $port
      */
-    public function setPort($port)
+    public function setPort(int $port): void
     {
         $this->port = $port;
     }
 
     /**
-     * @return int
+     * @return float
      */
-    public function getTimeout()
+    public function getTimeout(): float
     {
         return $this->timeout;
     }
 
     /**
-     * @param int $timeout
+     * @param float $timeout
      */
-    public function setTimeout($timeout)
+    public function setTimeout(float $timeout): void
     {
         $this->timeout = $timeout;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getCharset()
+    public function getCharset(): string
     {
         return $this->charset;
     }
 
     /**
-     * @param mixed $charset
+     * @param string $charset
      */
-    public function setCharset($charset)
+    public function setCharset(string $charset): void
     {
         $this->charset = $charset;
     }
@@ -156,7 +134,7 @@ class Config extends SplBean
     /**
      * @return bool
      */
-    public function isStrictType()
+    public function isStrictType(): bool
     {
         return $this->strict_type;
     }
@@ -164,7 +142,7 @@ class Config extends SplBean
     /**
      * @param bool $strict_type
      */
-    public function setStrictType($strict_type)
+    public function setStrictType(bool $strict_type): void
     {
         $this->strict_type = $strict_type;
     }
@@ -172,7 +150,7 @@ class Config extends SplBean
     /**
      * @return bool
      */
-    public function isFetchMode()
+    public function isFetchMode(): bool
     {
         return $this->fetch_mode;
     }
@@ -180,73 +158,24 @@ class Config extends SplBean
     /**
      * @param bool $fetch_mode
      */
-    public function setFetchMode($fetch_mode)
+    public function setFetchMode(bool $fetch_mode): void
     {
         $this->fetch_mode = $fetch_mode;
     }
-
-    /**
-     * @return string
-     */
-    public function getAlias(): string
-    {
-        return $this->alias;
-    }
-
-    /**
-     * @param string $alias
-     */
-    public function setAlias(string $alias): void
-    {
-        $this->alias = $alias;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isSubQuery(): bool
-    {
-        return $this->isSubQuery;
-    }
-
-    /**
-     * @param bool $isSubQuery
-     */
-    public function setIsSubQuery(bool $isSubQuery): void
-    {
-        $this->isSubQuery = $isSubQuery;
-    }
-
 
     /**
      * @return int
      */
     public function getMaxReconnectTimes(): int
     {
-        return $this->max_reconnect_times;
+        return $this->maxReconnectTimes;
     }
 
     /**
-     * @param int $max_reconnect_times
+     * @param int $maxReconnectTimes
      */
-    public function setMaxReconnectTimes(int $max_reconnect_times): void
+    public function setMaxReconnectTimes(int $maxReconnectTimes): void
     {
-        $this->max_reconnect_times = $max_reconnect_times;
-    }
-
-    /**
-     * @return callable
-     */
-    public function getOnQuery():?callable
-    {
-        return $this->onQuery;
-    }
-
-    /**
-     * @param mixed $onQuery
-     */
-    public function setOnQuery(callable $onQuery): void
-    {
-        $this->onQuery = $onQuery;
+        $this->maxReconnectTimes = $maxReconnectTimes;
     }
 }
