@@ -548,19 +548,26 @@ class Redis
         }
         return $handelClass->getData($recv);
     }
-
+    
+    /**
+     * get方法
+     */
     public function get($key)
     {
+        //实例化Get处理类
         $handelClass = new Get($this);
+        //获取命令的参数
         $command = $handelClass->getCommand($key);
-
+        //发送命令
         if (!$this->sendCommand($command)) {
             return false;
         }
+        //获取结果
         $recv = $this->recv();
         if ($recv === null) {
             return false;
         }
+        //处理结果返回
         return $handelClass->getData($recv);
     }
 
@@ -2855,6 +2862,7 @@ class Redis
             $recv->setStatus($recv::STATUS_OK);
             return $recv;
         }
+        //从服务器获取数据
         $recv = $this->client->recv($timeout ?? $this->config->getTimeout());
         if ($recv->getStatus() == $recv::STATUS_ERR) {
             $this->errorType = $recv->getErrorType();

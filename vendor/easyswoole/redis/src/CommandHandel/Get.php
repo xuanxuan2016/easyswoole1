@@ -9,7 +9,11 @@ class Get extends AbstractCommandHandel
 {
 	public $commandName = 'Get';
 
-
+        /**
+         * 获取命令发送数据
+         * @param type $data
+         * @return type
+         */
 	public function handelCommandData(...$data)
 	{
 		$key=array_shift($data);
@@ -22,7 +26,11 @@ class Get extends AbstractCommandHandel
 		return $commandData;
 	}
 
-
+        /**
+         * 获取命令返回结果
+         * @param Response $recv
+         * @return type
+         */
 	public function handelRecv(Response $recv)
 	{
 		$data = $recv->getData();

@@ -24,12 +24,18 @@ Abstract class AbstractCommandHandel
     {
         $this->redis = $redis;
     }
-
+    
+    /**
+     * 获取命令参数
+     * @param type $data
+     * @return type
+     */
     function getCommand(...$data)
     {
         $commandData = $this->handelCommandData(...$data);
         //开启了管道
         if ($this->redis->getPipe() instanceof Pipe && $this->redis->getPipe()->isStartPipe() == true) {
+            //将命令添加到管道数组
             $this->redis->getPipe()->addCommand([$this->commandName, $commandData]);
             //事务命令忽略
             if (!in_array(strtolower($this->commandName), Pipe::IGNORE_COMMAND)) {
@@ -38,7 +44,12 @@ Abstract class AbstractCommandHandel
         }
         return $commandData;
     }
-
+    
+    /**
+     * 获取服务器返回数据
+     * @param Response $recv
+     * @return boolean|string
+     */
     function getData(Response $recv)
     {
         //开启了事务
@@ -77,7 +88,12 @@ Abstract class AbstractCommandHandel
     {
         return $this->commandName;
     }
-
+    
+    /**
+     * 序列化值
+     * @param type $val
+     * @return type
+     */
     protected function serialize($val)
     {
         switch ($this->redis->getConfig()->getSerialize()) {
@@ -100,7 +116,12 @@ Abstract class AbstractCommandHandel
                 }
         }
     }
-
+    
+    /**
+     * 反序列化值
+     * @param type $val
+     * @return type
+     */
     protected function unSerialize($val)
     {
         switch ($this->redis->getConfig()->getSerialize()) {

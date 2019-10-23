@@ -3,7 +3,9 @@
 
 namespace EasySwoole\Redis;
 
-
+/**
+ * tcp交互客户端
+ */
 class Client
 {
     /**
@@ -12,13 +14,19 @@ class Client
     protected $client;
     protected $host;
     protected $port;
-
+    
+    /**
+     * 构造函数
+     */
     function __construct(string $host, int $port)
     {
         $this->host = $host;
         $this->port = $port;
     }
-
+    
+    /**
+     * 建立连接
+     */
     public function connect(float $timeout = 3.0): bool
     {
         if ($this->client == null) {
@@ -31,23 +39,37 @@ class Client
 
         return $this->client->connect($this->host, $this->port, $timeout);
     }
-
+    
+    /**
+     * 向redis服务器发送数据
+     */
     public function send(string $data): bool
-    {
+    {   
+        //判断发送成功的数据长度是否等于原数据长度
         return strlen($data) === $this->client->send($data);
     }
-
+    
+    /**
+     * 向redis发送命令
+     * @param array $commandList
+     * @return bool
+     */
     public function sendCommand(array $commandList): bool
     {
         $argNum = count($commandList);
+        //参数个数
         $str = "*{$argNum}\r\n";
+        //拼接参数
         foreach ($commandList as $value) {
             $len = strlen($value);
             $str = $str . '$' . "{$len}\r\n{$value}\r\n";
         }
         return $this->send($str);
     }
-
+    
+    /**
+     * 从redis服务器接收数据，生成Response实例
+     */
     function recv(float $timeout = 3.0): ?Response
     {
         /*
@@ -66,9 +88,10 @@ class Client
             return $result;
         }
         /**
-         * 去除每行的\r\n
+         * 去除每行结尾的的\r\n
          */
         $str = substr($str, 0, -2);
+        //获取回复类型
         $op = substr($str, 0, 1);
         $result = $this->opHandel($op, $str, $timeout);
         return $result;
@@ -76,6 +99,7 @@ class Client
 
     /**
      * 字符串处理方法
+     * 根据不同的回复类型，进行不同的处理
      * opHandel
      * @param $op
      * @param $value
@@ -120,6 +144,9 @@ class Client
     /**
      * 状态类型处理
      * successHandel
+     * 
+     * send：【*1\r\n$4\r\nPING\r\n】
+     * resv：【+PONG\r\n】
      * @param $value
      * @return Response
      * @author Tioncico
@@ -136,6 +163,9 @@ class Client
     /**
      * 错误类型处理
      * errorHandel
+     * 
+     * send：【*2\r\n$3\r\nGET\r\n$5\r\ntest2\r\n】 查询不存在的key
+     * resv：【-WRONGTYPE Operation against a key holding the wrong kind of value\r\n】
      * @param $value
      * @return Response
      * @author Tioncico
@@ -162,6 +192,9 @@ class Client
     /**
      * int类型处理
      * intHandel
+     * 
+     * send：【*3\r\n$7\r\nPUBLISH\r\n$18\r\n__sentinel__:hello\r\n$90\r\n10.100.2.235,26379,0f56c6592785871a0ff3fdce22a219affa40b529,5,mymaster,10.100.3.106,6379,5\r\n】
+     * resv：【:2\r\n】
      * @param $value
      * @return Response
      * @author Tioncico
@@ -178,6 +211,9 @@ class Client
     /**
      * 批量回复处理
      * batchHandel
+     * 
+     * send：【*2\r\n$3\r\nget\r\n$5\r\ntest1\r\n】 查询不存在的key
+     * resv：【$17\r\naoooooooooooooooa\r\n】
      * @param $str
      * @param $timeout
      * @return bool|string
@@ -187,6 +223,7 @@ class Client
     protected function batchHandel($str, float $timeout)
     {
         $response = new Response();
+        //获取长度
         $strLen = substr($str, 1);
         //批量回复,继续读取字节
         $len = 0;
@@ -198,6 +235,7 @@ class Client
             $response->setData(null);
         } else {
             $eolLen = strlen("\r\n");
+            //循环获取直到获取到指定长度数据
             while ($len < $strLen+$eolLen) {
                 $strTmp = $this->client->recv($timeout);
                 $len += strlen($strTmp);
@@ -212,6 +250,9 @@ class Client
     /**
      * 多条批量回复
      * multipleBatchHandel
+     * 
+     * send：【】 
+     * resv：【*3\r\n$7\r\nmessage\r\n$18\r\n__sentinel__:hello\r\n$90\r\n10.100.3.106,26379,2f78bd5cfe6b1729007771c6a575a8cd448a1df6,5,mymaster,10.100.3.106,6379,5\r\n】
      * @param $value
      * @param $timeout
      * @return Response
@@ -221,6 +262,7 @@ class Client
     protected function multipleBatchHandel($value, float $timeout)
     {
         $result = new Response();
+        //获取回复的数量
         $len = substr($value, 1);
         if ($len == 0) {
             $result->setStatus($result::STATUS_OK);
@@ -230,9 +272,12 @@ class Client
             $result->setData(null);
         } else {
             $arr = [];
+            //循环获取每个回复
             while ($len--) {
+                //如下方法同批量回复
                 $str = $this->client->recv($timeout);
                 $str = substr($str, 0, -2);
+                //获取单批量回复长度
                 $op = substr($str, 0, 1);
                 $response = $this->opHandel($op, $str, $timeout);
                 if ($response->getStatus()!=$response::STATUS_OK){
@@ -246,7 +291,10 @@ class Client
         }
         return $result;
     }
-
+    
+    /**
+     * 关闭连接
+     */
     function close()
     {
         if ($this->client) {
@@ -264,7 +312,10 @@ class Client
     {
         return $this->client->errCode;
     }
-
+    
+    /**
+     * 析构函数
+     */
     public function __destruct()
     {
         $this->close();;
